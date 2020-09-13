@@ -46,7 +46,26 @@ function memory_card_inserter.startplugin()
 			end
 		end
 
+	end
 
+	local function get_software_familyname(machine, slot_name)
+		for name, image in pairs(machine.images) do
+			if name == slot_name then
+				if not image:exists() then
+					return nil
+				end
+				if image:software_list_name() == '' then
+					return nil
+				end
+
+				if image.software_parent == '' then
+					return image:filename()
+				else
+					return image.software_parent
+				end
+			end
+		end
+		return nil
 	end
 
 	local function auto_insert()
@@ -55,15 +74,23 @@ function memory_card_inserter.startplugin()
 		if driver.source_file:sub(-#'neogeo.cpp') ~= 'neogeo.cpp' then
 			return
 		end
+
 		local memcard_name = nil
 		if driver.name == 'neogeo' or driver.name == 'aes' then
-			local softname = emu.softname()
-			if softname == '' then
+			local softname = get_software_familyname(machine, 'cart')
+			if softname == nil then
+				softname = get_software_familyname(machine, 'cart1')
+			end
+			if softname == nil then
 				return
 			end
 			memcard_name = softname
 		else
-			memcard_name = driver.name
+			if driver.parent == 'neogeo' or driver.parent == '0' then
+				memcard_name = driver.name
+			else
+				memcard_name = driver.parent
+			end
 		end
 
 		local base_path = get_memory_card_dir()
