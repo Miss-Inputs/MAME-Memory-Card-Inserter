@@ -75,9 +75,6 @@ function memory_card_inserter.startplugin()
 		insert_card(machine, path)
 	end
 
-	--emu.register_start(function()
-	--	auto_insert()
-	--end)
 	emu.register_start(auto_insert)
 end
 
