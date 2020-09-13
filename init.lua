@@ -30,7 +30,7 @@ function memory_card_inserter.startplugin()
 	end
 
 	local function insert_card(machine, path)
-		emu.print_verbose('We want to use ' .. path)
+		emu.print_verbose('memory-card-inserter: card path = ' .. path)
 
 		for name, image in pairs(machine.images) do
 			if name == 'memcard' then
