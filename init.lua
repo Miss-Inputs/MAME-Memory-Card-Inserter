@@ -1,6 +1,6 @@
 local exports = {}
 exports.name = "memory_card_inserter"
-exports.version = "0.0.1"
+exports.version = "0.0.2"
 exports.description = "Automatically insert Neo Geo memory card"
 exports.license = "MIT"
 exports.author = { name = "Megan Leet (Zowayix)" }
@@ -9,7 +9,7 @@ local memory_card_inserter = exports
 
 function memory_card_inserter.startplugin()
 	local function get_config_path()
-		return lfs.env_replace(manager:machine():options().entries.homepath:value():match('([^;]+)')) .. '/memory_card_inserter.ini'
+		return emu.subst_env(manager.machine.options.entries.homepath:value():match('([^;]+)')) .. '/memory_card_inserter.ini'
 	end
 
 	local function get_memory_card_dir()
@@ -33,13 +33,15 @@ function memory_card_inserter.startplugin()
 		emu.print_verbose('memory-card-inserter: card path = ' .. path)
 
 		for name, image in pairs(machine.images) do
-			if name == 'memcard' then
-				if image:exists() then
+			if name == ':memcard' or name == 'memcard' then
+				if image.exists then
 					--We don't want to mess around with this if someone's already inserted a memory card
+					emu.print_verbose('memory-card-inserter: Memory card is already inserted')
 					return
 				end
 				if not lfs.attributes(path) then
 					--Only create the file if it does not already exists, otherwise it would overwrite what is already there
+					emu.print_verbose('memory-card-inserter: Creating new memory card file')
 					image:create(path)
 				end
 				image:load(path)
@@ -49,37 +51,37 @@ function memory_card_inserter.startplugin()
 	end
 
 	local function get_software_familyname(machine, slot_name)
-		for name, image in pairs(machine.images) do
-			if name == slot_name then
-				if not image:exists() then
-					return nil
-				end
-				if image:software_list_name() == '' then
-					return nil
-				end
-
-				if image.software_parent == '' then
-					return image:filename()
-				else
-					return image.software_parent
-				end
-			end
+		image = machine.images[slot_name]
+		if image == nil then
+			return nil
 		end
-		return nil
+		if not image.exists then
+			return nil
+		end
+		if image.software_list_name == '' then
+			return nil
+		end
+
+		if image.software_parent == '' then
+			return image.filename
+		else
+			return image.software_parent
+		end
 	end
 
+
 	local function auto_insert()
-		local machine = manager:machine()
-		local driver = machine:system()
+		local machine = manager.machine
+		local driver = machine.system
 		if driver.source_file:sub(-#'neogeo.cpp') ~= 'neogeo.cpp' then
 			return
 		end
 
 		local memcard_name = nil
 		if driver.name == 'neogeo' or driver.name == 'aes' then
-			local softname = get_software_familyname(machine, 'cart')
+			local softname = get_software_familyname(machine, ':cslot')
 			if softname == nil then
-				softname = get_software_familyname(machine, 'cart1')
+				softname = get_software_familyname(machine, ':cslot1')
 			end
 			if softname == nil then
 				return

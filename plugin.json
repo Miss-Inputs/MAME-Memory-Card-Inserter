@@ -2,7 +2,7 @@
 	"plugin": {
 	  "name": "memory_card_inserter",
 	  "description": "Automatically insert Neo Geo memory card",
-	  "version": "0.0.1",
+	  "version": "0.0.2",
 	  "author": "Megan Leet (Zowayix)",
 	  "type": "plugin",
 	  "start": "false"
